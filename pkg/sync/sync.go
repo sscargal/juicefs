@@ -348,7 +348,7 @@ func checkSum(src, dst object.ObjectStorage, key string, obj object.Object, conf
 
 var fastStreamRead = map[string]struct{}{"file": {}, "hdfs": {}, "jfs": {}, "gluster": {}}
 var streamWrite = map[string]struct{}{"file": {}, "hdfs": {}, "sftp": {}, "gs": {}, "wasb": {}, "ceph": {}, "swift": {}, "webdav": {}, "upyun": {}, "jfs": {}, "gluster": {}}
-var readInMem = map[string]struct{}{"mem": {}, "etcd": {}, "redis": {}, "tikv": {}, "mysql": {}, "postgres": {}, "sqlite3": {}}
+var readInMem = map[string]struct{}{"mem": {}, "etcd": {}, "redis": {}, "tikv": {}, "mysql": {}, "postgres": {}, "sqlite3": {}, "dax": {}}
 
 func inMap(obj object.ObjectStorage, m map[string]struct{}) bool {
 	_, ok := m[strings.Split(obj.String(), "://")[0]]
