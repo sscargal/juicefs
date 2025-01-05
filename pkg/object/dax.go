@@ -6,7 +6,6 @@ package object
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -18,18 +17,13 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
-	"github.com/juicedata/juicefs/pkg/meta" // Import the meta package
 	"golang.org/x/sys/unix"
 )
 
 // Compile-time check to ensure *daxStore implements ObjectStorage.
 var _ ObjectStorage = (*daxStore)(nil)
-
-// Ensure daxStore implements the meta.Meta interface
-var _ meta.Meta = (*daxStore)(nil)
 
 const (
 	// defaultPageSize is the size of a memory page.
@@ -795,40 +789,6 @@ func (ds *daxStore) Close() error {
 		logger.Debugf("Successfully closed dax device file descriptor")
 	}
 	return nil
-}
-
-// StatFS provides filesystem statistics to the OS
-func (ds *daxStore) StatFS(ctx context.Context, ino Ino, totalspace, availspace, iused, iavail *uint64) syscall.Errno {
-	ds.metaMu.RLock()
-	defer ds.metaMu.RUnlock()
-
-	// TotalSize: total space allocated minus reserved header space
-	actualTotalSize := ds.header.TotalSize - ds.header.FreeListOff
-	*totalspace = uint64(actualTotalSize)
-
-	// Calculate used space by iterating over all objects
-	var usedSpace int64 = 0
-	var usedInodes uint64 = 0
-	for _, obj := range ds.objectIndex {
-		usedSpace += obj.size
-		usedInodes += 1 // Assuming one inode per object
-	}
-
-	// Available space: TotalSize - UsedSpace
-	*availspace = uint64(actualTotalSize - usedSpace)
-
-	// iused: Number of used inodes
-	*iused = usedInodes
-
-	// iavail: Number of available inodes (assuming a maximum inode limit)
-	const maxInodes uint64 = 1000000 // Example maximum; adjust as needed
-	if usedInodes >= maxInodes {
-		*iavail = 0
-	} else {
-		*iavail = maxInodes - usedInodes
-	}
-
-	return 0 // Success
 }
 
 // -------------------------------------
